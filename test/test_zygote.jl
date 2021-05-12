@@ -44,8 +44,8 @@ include("testfuncs.jl")
     end
 
 
-    @test @tinferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int64}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
-    @test @tinferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int64}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
+    @test @tinferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
+    @test @tinferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
 
     @test cr_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080)))
     @test zg_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080))) # == zg_fwd_and_back(f, xs, ΔΩ)

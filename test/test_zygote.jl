@@ -44,8 +44,8 @@ include("testfuncs.jl")
     end
 
 
-    @test @inferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int64}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
-    @test @inferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int64}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
+    @test @tinferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int64}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
+    @test @tinferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int64}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
 
     @test cr_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080)))
     @test zg_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080))) # == zg_fwd_and_back(f, xs, ΔΩ)
@@ -73,30 +73,30 @@ include("testfuncs.jl")
     Xs = map(x -> fill(x, 5), xs)
     ΔΩA = fill(ΔΩ, 5)
 
-    @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[1]), Val(3), ΔΩA)) == fill(280, 5)
-    @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[2]), Val(3), ΔΩA)) == fill((600, 1040), 5)
-    @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[3]), Val(3), ΔΩA)) == fill(SVector(1600, 2280, 3080), 5)
+    @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[1]), Val(3), ΔΩA)) == fill(280, 5)
+    @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[2]), Val(3), ΔΩA)) == fill((600, 1040), 5)
+    @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[3]), Val(3), ΔΩA)) == fill(SVector(1600, 2280, 3080), 5)
 
     for args in (Xs, (Xs[1], Ref(xs[2]), Xs[3]), map(Ref, xs))
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), ΔΩA)) == fill(280, 5)
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), ΔΩA)) == fill((600, 1040), 5)
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), ΔΩA)) == fill(SVector(1600, 2280, 3080), 5)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), ΔΩA)) == fill(280, 5)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), ΔΩA)) == fill((600, 1040), 5)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), ΔΩA)) == fill(SVector(1600, 2280, 3080), 5)
     end
 
     for args in (Xs, (Xs[1], Ref(xs[2]), Xs[3]))
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), Ref(ΔΩ))) == fill(280, 5)
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), Ref(ΔΩ))) == fill((600, 1040), 5)
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), Ref(ΔΩ))) == fill(SVector(1600, 2280, 3080), 5)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), Ref(ΔΩ))) == fill(280, 5)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), Ref(ΔΩ))) == fill((600, 1040), 5)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), Ref(ΔΩ))) == fill(SVector(1600, 2280, 3080), 5)
     end
 
     let args = map(Ref, xs), ΔY = Ref(ΔΩ)
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), Ref(ΔΩ))) == 280
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), Ref(ΔΩ))) == (600, 1040)
-        @test @inferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), Ref(ΔΩ))) == SVector(1600, 2280, 3080)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), Ref(ΔΩ))) == 280
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), Ref(ΔΩ))) == (600, 1040)
+        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), Ref(ΔΩ))) == SVector(1600, 2280, 3080)
     end
 
 
-    # @inferred cr_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
+    # @tinferred cr_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
     # zg_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
     # zg_bc_fwd_and_back(f, Xs, ΔΩA)
 
@@ -146,14 +146,14 @@ include("testfuncs.jl")
         x = 0.5
     
         ΔΩ = (y = 1, ladj = nothing)
-        #=@inferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
-        #=@inferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
+        #=@tinferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
+        #=@tinferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
         #compare with (ignore missings):
         zg_fwd_and_back(disttrafo, (trg_d, src_d, x, missing), ΔΩ)
     
         ΔΩ = (y = 1, ladj = 42)
-        #=@inferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
-        #=@inferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
+        #=@tinferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
+        #=@tinferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
         #compare with (use deep approx):
         zg_fwd_and_back(disttrafo, (trg_d, src_d, x, 7), ΔΩ)
     
@@ -164,14 +164,14 @@ include("testfuncs.jl")
         X = randn(n)
     
         ΔΩs = fill((y = 1, ladj = nothing), n)
-        #=@inferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
-        #=@inferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
+        #=@tinferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
+        #=@tinferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
         #compare with (ignore missings):
         zg_bc_fwd_and_back(disttrafo, (trg_D, src_D, X, missing), ΔΩs)
     
         ΔΩs = fill((y = 1, ladj = 42), n)
-        #=@inferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
-        #=@inferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
+        #=@tinferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
+        #=@tinferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
         #compare with (use deep approx):
         zg_bc_fwd_and_back(disttrafo, (trg_D, src_D, X, 7), ΔΩs)
     
@@ -189,8 +189,8 @@ include("testfuncs.jl")
             ismissing(ladj) ? 2 * y : typeof(y)(y^2 + ladj^2)
         end
     
-        #=@inferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, 42)
-        #=@inferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, missing)
+        #=@tinferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, 42)
+        #=@tinferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, missing)
     
         function bc_dummy_loss(trg_D::AbstractVector{<:Distribution}, src_D::AbstractVector{<:Distribution}, X::AbstractVector{<:Real}, prev_ladj::Union{Real,Missing})
             Y_ladj = fwddiff(disttrafo).(trg_D, src_D, X, prev_ladj)
@@ -200,13 +200,13 @@ include("testfuncs.jl")
             any(ismissing, ladj) ? T(sum(Y)) : T(sum(Y)^2 + sum(ladj)^2)
         end
     
-        #=@inferred=# bc_dummy_loss(trg_D, src_D, X, 42)
-        #=@inferred=# bc_dummy_loss(trg_D, src_D, X, missing)
+        #=@tinferred=# bc_dummy_loss(trg_D, src_D, X, 42)
+        #=@tinferred=# bc_dummy_loss(trg_D, src_D, X, missing)
     
-        #=@inferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, 42)
-        #=@inferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, missing)
+        #=@tinferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, 42)
+        #=@tinferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, missing)
     
-        #=@inferred=# Zygote.gradient(X -> bc_dummy_loss(trg_D, src_D, X, 42), X)
+        #=@tinferred=# Zygote.gradient(X -> bc_dummy_loss(trg_D, src_D, X, 42), X)
     
         # Requires Zygote to utilize thunks (https://github.com/FluxML/Zygote.jl/pull/966):
         if isdefined(Zygote, Symbol("@_adjoint_keepthunks"))

@@ -1,5 +1,17 @@
 # This file is a part of ForwardDiffPullbacks.jl, licensed under the MIT License (MIT).
 
+import Test
+
+# Tests type inference on Julia >= v1.6 only:
+macro tinferred(expr)
+    if VERSION >= v"1.6"
+        esc(:(Test.@inferred($expr)))
+    else
+        esc(:($expr))
+    end
+end
+
+
 using LinearAlgebra, StaticArrays
 
 sum_pow2(x) = sum(map(x -> x^2, x))

@@ -16,7 +16,7 @@ include("testfuncs.jl")
     ΔΩy = SVector(ΔΩ)
 
 
-    @test @inferred(ForwardDiffPullbacks.forwarddiff_fwd_back(f, xs, Val(1), ΔΩ)) == 280
-    @test @inferred(ForwardDiffPullbacks.forwarddiff_fwd_back(f, xs, Val(2), ΔΩ)) == (600, 1040)
-    @test @inferred(ForwardDiffPullbacks.forwarddiff_fwd_back(f, xs, Val(3), ΔΩ)) == SVector(1600, 2280, 3080)
+    @test @tinferred(ForwardDiffPullbacks.forwarddiff_fwd_back(f, xs, Val(1), ΔΩ)) == 280
+    @test @tinferred(ForwardDiffPullbacks.forwarddiff_fwd_back(f, xs, Val(2), ΔΩ)) == (600, 1040)
+    @test @tinferred(ForwardDiffPullbacks.forwarddiff_fwd_back(f, xs, Val(3), ΔΩ)) == SVector(1600, 2280, 3080)
 end

@@ -42,7 +42,7 @@ end
 @inline forwarddiff_back_unshaped(ΔΩ::RealTangentLike, y_dual::Real) = (ΔΩ * dual_partials(y_dual)...,)
 
 partials_prod(y_dual::Real, ΔΩ_i::Real) = dual_partials(y_dual) * ΔΩ_i
-partials_prod(y_dual::Any, ΔΩ_i::ZeroLike) = ChainRulesCore.Zero()
+partials_prod(y_dual::Any, ΔΩ_i::ZeroLike) = ZeroTangent()
 
 
 function forwarddiff_back_unshaped(ΔΩ::NTuple{N,RealTangentLike}, y_dual::NTuple{N,RealDualLike}) where N
@@ -57,7 +57,7 @@ end
     forwarddiff_back_unshaped((ΔΩ...,), (y_dual...,))
 end
 
-function forwarddiff_back_unshaped(ΔΩ::ChainRulesCore.Composite, y_dual::Any)
+function forwarddiff_back_unshaped(ΔΩ::Tangent, y_dual::Any)
     stripped_ΔΩ = getfield(ChainRulesCore.canonicalize(ΔΩ), :backing)
     forwarddiff_back_unshaped(stripped_ΔΩ, y_dual)
 end

@@ -13,7 +13,7 @@ include("testfuncs.jl")
         y, back = ChainRulesCore.rrule(f, xs...)
         back_thunks = back(ΔΩ)
         Δx = map(unthunk, back_thunks)
-        @assert first(Δx) == ChainRulesCore.Zero()
+        @assert first(Δx) == ZeroTangent()
         y, Base.tail(Δx)
     end
 
@@ -28,7 +28,7 @@ include("testfuncs.jl")
         y, back = ChainRulesCore.rrule(Base.broadcasted, f, Xs...)
         back_thunks = back(ΔΩA)
         Δx = map(unthunk, back_thunks)
-        @assert first(Δx) == ChainRulesCore.Zero()
+        @assert first(Δx) == ZeroTangent()
         y, Base.tail(Δx)
     end
 

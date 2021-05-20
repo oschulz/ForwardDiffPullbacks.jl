@@ -32,7 +32,7 @@ using ChainRulesCore
 
 y, back = rrule(fwddiff(f), xs...)
 y == 139
-map(unthunk, back(1)) == (Zero(), 4, (6, 8), [10, 12, 14])
+map(unthunk, back(1)) == (ZeroTangent(), 4, (6, 8), [10, 12, 14])
 
 using Zygote
 

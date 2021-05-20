@@ -17,6 +17,7 @@ import StaticArrays
 
 # using Requires
 
+include("chain_rules_aliases.jl")
 include("dual_numbers.jl")
 include("chainrules_types.jl")
 include("fwd_back.jl")

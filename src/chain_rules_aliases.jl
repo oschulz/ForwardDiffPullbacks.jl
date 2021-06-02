@@ -12,3 +12,9 @@ else
     const Tangent{P,T} = ChainRulesCore.Composite{P,T}
     const ZeroTangent = ChainRulesCore.Zero
 end
+
+@static if isdefined(ChainRulesCore, :NoTangent)
+    const NoTangent = ChainRulesCore.NoTangent
+else
+    const NoTangent = ZeroTangent
+end

@@ -18,7 +18,7 @@ end
 
 
 Base.@generated function _forwarddiff_pullback_thunks(f::Base.Callable, xs::NTuple{N,Any}, ΔΩ::Any) where N
-    Expr(:tuple, ChainRulesCore.NO_FIELDS, (:(ForwardDiffPullbacks.FwdDiffPullbackThunk(f, xs, Val($i), ΔΩ)) for i in 1:N)...)
+    Expr(:tuple, NoTangent(), (:(ForwardDiffPullbacks.FwdDiffPullbackThunk(f, xs, Val($i), ΔΩ)) for i in 1:N)...)
 end
 
 g_ΔΩ = nothing
@@ -56,7 +56,7 @@ end
 
 
 Base.@generated function _forwarddiff_bc_pullback_thunks(f::Base.Callable, Xs::NTuple{N,Any}, ΔΩA::Any) where N
-    Expr(:tuple, ChainRulesCore.NO_FIELDS, ChainRulesCore.NO_FIELDS, (:(ForwardDiffPullbacks.FwdDiffBCPullbackThunk(f, Xs, Val($i), ΔΩA)) for i in 1:N)...)
+    Expr(:tuple, NoTangent(), NoTangent(), (:(ForwardDiffPullbacks.FwdDiffBCPullbackThunk(f, Xs, Val($i), ΔΩA)) for i in 1:N)...)
 end
 
 function ChainRulesCore.rrule(::typeof(Base.broadcasted), wrapped_f::WithForwardDiff, Xs::Vararg{Any,N}) where N

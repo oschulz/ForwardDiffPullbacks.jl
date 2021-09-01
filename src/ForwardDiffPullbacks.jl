@@ -15,7 +15,7 @@ import ChainRulesCore
 import ForwardDiff
 import StaticArrays
 
-using ChainRulesCore: AbstractTangent, Tangent, NoTangent, ZeroTangent
+using ChainRulesCore: AbstractTangent, Tangent, NoTangent, ZeroTangent, AbstractThunk, unthunk
 
 # using Requires
 

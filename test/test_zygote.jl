@@ -6,6 +6,9 @@ using Test
 using Distributions
 using ForwardDiff, ChainRulesCore, Zygote
 
+using ForwardDiffPullbacks: make_tangent
+
+
 include("testfuncs.jl")
 
 @testset "Zygote" begin
@@ -44,56 +47,11 @@ include("testfuncs.jl")
     end
 
 
-    @test @tinferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
+    @test @tinferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tangent{Tuple{Int, Float32}, Tuple{Float32, Float32}}, SVector{3, Float32}}}
     @test @tinferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
 
-    @test cr_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080)))
+    @test cr_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, Tangent{Tuple{Int, Float32}}(600.0f0, 1040.0f0), SVector(1600, 2280, 3080)))
     @test zg_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080))) # == zg_fwd_and_back(f, xs, ΔΩ)
-    
-
-    function f_loss_1(xs...)
-        r = fwddiff(f)(xs...)
-        @assert sum(r) < 10000
-        sum(r[1])
-    end
-
-    function f_loss_3(xs...)
-        r = fwddiff(f)(xs...)
-        @assert sum(r) < 10000
-        sum(r[3])
-    end
-
-    function f_loss_3z(xs...)
-        r = f(xs...)
-        @assert sum(r) < 10000
-        sum(r[3])
-    end
-
-
-    Xs = map(x -> fill(x, 5), xs)
-    ΔΩA = fill(ΔΩ, 5)
-
-    @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[1]), Val(3), ΔΩA)) == fill(280, 5)
-    @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[2]), Val(3), ΔΩA)) == fill((600, 1040), 5)
-    @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, (Xs[1], Ref(xs[2]), Xs[3]), Val(3), ΔΩA)) == fill(SVector(1600, 2280, 3080), 5)
-
-    for args in (Xs, (Xs[1], Ref(xs[2]), Xs[3]), map(Ref, xs))
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), ΔΩA)) == fill(280, 5)
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), ΔΩA)) == fill((600, 1040), 5)
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), ΔΩA)) == fill(SVector(1600, 2280, 3080), 5)
-    end
-
-    for args in (Xs, (Xs[1], Ref(xs[2]), Xs[3]))
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), Ref(ΔΩ))) == fill(280, 5)
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), Ref(ΔΩ))) == fill((600, 1040), 5)
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), Ref(ΔΩ))) == fill(SVector(1600, 2280, 3080), 5)
-    end
-
-    let args = map(Ref, xs), ΔY = Ref(ΔΩ)
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(1), Ref(ΔΩ))) == 280
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(2), Ref(ΔΩ))) == (600, 1040)
-        @test @tinferred(ForwardDiffPullbacks.forwarddiff_bc_fwd_back(f, args, Val(3), Ref(ΔΩ))) == SVector(1600, 2280, 3080)
-    end
 
 
     # @tinferred cr_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
@@ -192,7 +150,7 @@ include("testfuncs.jl")
         #=@tinferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, 42)
         #=@tinferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, missing)
     
-        function bc_dummy_loss(trg_D::AbstractVector{<:Distribution}, src_D::AbstractVector{<:Distribution}, X::AbstractVector{<:Real}, prev_ladj::Union{Real,Missing})
+        function bc_dummy_loss(trg_D::AbstractVector{<:Distribution}, src_D::AbstractVector{<:Distribution}, X::AbstractVector{<:Real}, prev_ladj::Union{Real,AbstractVector{<:Real},Missing})
             Y_ladj = fwddiff(disttrafo).(trg_D, src_D, X, prev_ladj)
             Y = (x -> x.y).(Y_ladj)
             ladj = (x -> x.ladj).(Y_ladj)
@@ -213,5 +171,24 @@ include("testfuncs.jl")
             trg_D = fill(Beta(), n)
             Zygote.gradient(X -> bc_dummy_loss(trg_D, src_D, X, missing), X)
         end
+    end
+
+    @testset "struct ctor pullbacks" begin
+        mkdists(Mean, Sigma) = Normal.(Mean, Sigma)
+        mkdists_fd(Mean, Sigma) = fwddiff(Normal).(Mean, Sigma)
+
+        getlogpdfs(Mean, Sigma, X) = logpdf.(mkdists(Mean, Sigma), X)
+        getlogpdfs_fd(Mean, Sigma, X) = fwddiff(logpdf).(mkdists_fd(Mean, Sigma), X)
+
+        sum_getlogpdfs(Mean, Sigma, X) = sum(getlogpdfs(Mean, Sigma, X))
+        sum_getlogpdfs_fd(Mean, Sigma, X) = sum(getlogpdfs_fd(Mean, Sigma, X))
+
+        Sigma = rand(10)
+        Mean = randn(10)
+        X = rand.(mkdists(Mean, Sigma))
+
+        @test @inferred(getlogpdfs_fd(Mean, Sigma, X)) == getlogpdfs(Mean, Sigma, X)
+
+        @test all(isapprox.(Zygote.gradient(sum_getlogpdfs, Mean, Sigma, X), Zygote.gradient(sum_getlogpdfs_fd, Mean, Sigma, X)))
     end
 end

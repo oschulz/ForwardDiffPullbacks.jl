@@ -8,22 +8,41 @@ function forwarddiff_dualized(::Type{TagType}, x::NTuple{N,Real}) where {TagType
 end
 
 # Equivalent to ForwardDiff internal function dualize(T, x):
-forwarddiff_dualized(::Type{TagType}, x::StaticArrays.SVector) where {TagType} = StaticArrays.SVector(forwarddiff_dualized(TagType, (x...,)))
+forwarddiff_dualized(::Type{TagType}, x::SVector) where {TagType} = SVector(forwarddiff_dualized(TagType, (x...,)))
+forwarddiff_dualized(::Type{TagType}, x::SVector{0}) where {TagType} = x
+
+forwarddiff_dualized(::Type{TagType}, x) where TagType = unflatten(x, forwarddiff_dualized(TagType, flatten(x)))
 
 
-_fieldvals(x) = ntuple(i -> getfield(x, i), Val(fieldcount(typeof(x))))
+@inline tangent_dual_product(ΔΩ::RealTangentLike, y_dual::Real) = ΔΩ * dual_partials(y_dual)
+@inline tangent_dual_product(ΔΩ_i::ZeroLike, y_dual::Any) = ZeroTangent()
 
-@generated function _strip_type_parameters(tp::Type{T}) where T
-    nm = T.name
-    :($(nm.module).$(nm.name))
+tangent_dual_product(ΔΩ::Tuple{}, y_dual::Tuple{}) = NoTangent()
+
+tangent_dual_product(ΔΩ::Tuple, y_dual::Tuple) = sum(map(tangent_dual_product, ΔΩ, y_dual))
+
+function tangent_dual_product(ΔΩ::NTuple{N,RealTangentLike}, y_dual::NTuple{N,RealDualLike}) where N
+    sum(map(tangent_dual_product, ΔΩ, y_dual))
 end
 
-function forwarddiff_dualized(::Type{TagType}, x::T) where {TagType,T}
-    tp = _strip_type_parameters(T)
-    fieldvals = _fieldvals(x)
-    dual_fieldvals = forwarddiff_dualized(TagType, fieldvals)
-    tp(dual_fieldvals...)
+@inline function tangent_dual_product(ΔΩ::NamedTuple{names}, y_dual::NamedTuple{names}) where {names}
+    tangent_dual_product(values(ΔΩ), values(y_dual))
 end
+
+@inline function tangent_dual_product(ΔΩ::SVector{N}, y_dual::SVector{N}) where N
+    tangent_dual_product((ΔΩ...,), (y_dual...,))
+end
+
+function tangent_dual_product(ΔΩ::NamedTuple{names}, y_dual::Any) where {names,N}
+    tangent_dual_product(values(ΔΩ), getprops_by_name(y_dual, Val(names)))
+end
+
+function tangent_dual_product(ΔΩ::Tangent, y_dual::Any)
+    stripped_ΔΩ = ChainRulesCore.backing(ChainRulesCore.canonicalize(ΔΩ))
+    tangent_dual_product(stripped_ΔΩ, y_dual)
+end
+
+svec_tangent_dual_product(ΔΩ, y_dual) = make_svector((tangent_dual_product(ΔΩ, y_dual)...,))
 
 
 @inline function forwarddiff_fwd(f::Base.Callable, xs::Tuple, ::Val{i}) where i
@@ -34,62 +53,58 @@ end
 end
 
 
-@inline forwarddiff_value(y_dual::Real) = dual_value(y_dual)
-@inline forwarddiff_value(y_dual::NTuple{N,Real}) where N = map(dual_value, y_dual)
-@inline forwarddiff_value(y_dual::StaticArrays.SVector{N,<:Real}) where N = StaticArrays.SVector(map(dual_value, y_dual))
-
-
-@inline forwarddiff_back_unshaped(ΔΩ::RealTangentLike, y_dual::Real) = (ΔΩ * dual_partials(y_dual)...,)
-
-partials_prod(y_dual::Real, ΔΩ_i::Real) = dual_partials(y_dual) * ΔΩ_i
-partials_prod(y_dual::Any, ΔΩ_i::ZeroLike) = ZeroTangent()
-
-
-function forwarddiff_back_unshaped(ΔΩ::NTuple{N,RealTangentLike}, y_dual::NTuple{N,RealDualLike}) where N
-    (sum(map((ΔΩ_i, y_dual_i) -> partials_prod(y_dual_i, ΔΩ_i), ΔΩ, y_dual))...,)
-end
-
-function forwarddiff_back_unshaped(ΔΩ::NamedTuple{names,<:NTuple{N,RealTangentLike}}, y_dual::NamedTuple{names,<:NTuple{N,RealDualLike}}) where {names,N}
-    forwarddiff_back_unshaped(values(ΔΩ), values(y_dual))
-end
-
-@inline function forwarddiff_back_unshaped(ΔΩ::StaticArrays.SVector{N,<:RealTangentLike}, y_dual::StaticArrays.SVector{N,<:RealDualLike}) where N
-    forwarddiff_back_unshaped((ΔΩ...,), (y_dual...,))
-end
-
-function forwarddiff_back_unshaped(ΔΩ::Tangent, y_dual::Any)
-    stripped_ΔΩ = getfield(ChainRulesCore.canonicalize(ΔΩ), :backing)
-    forwarddiff_back_unshaped(stripped_ΔΩ, y_dual)
-end
-
-
-@inline shape_forwarddiff_gradient(::Type{<:Real}, Δx::Tuple{}) = nothing
-@inline shape_forwarddiff_gradient(::Type{<:Real}, Δx::Tuple{Real}) = Δx[1]
-@inline shape_forwarddiff_gradient(::Type{<:Tuple}, Δx::NTuple{N,Real}) where N = Δx
-@inline shape_forwarddiff_gradient(::Type{<:StaticArrays.SVector}, Δx::Tuple{}) = nothing
-@inline shape_forwarddiff_gradient(::Type{<:StaticArrays.SVector}, Δx::NTuple{N,Real}) where N = StaticArrays.SVector(Δx)
-
-@inline shape_forwarddiff_gradient(::Type{T}, Δx::Tuple{}) where T = nothing
-@inline @generated function shape_forwarddiff_gradient(::Type{T}, Δx::Tuple) where T
-    :(NamedTuple{$(fieldnames(T))}(Δx))
-end
-
-g_tangent = nothing
-g_y_dual = nothing
-# For `x::StaticArrays.SVector`, `ForwardDiffPullbacks.forwarddiff_back(StaticArrays.SVector, ΔΩ, ForwardDiffPullbacks.forwarddiff_fwd(f, (x,), Val(1))) == ForwardDiff.jacobian(f, x)' * ΔΩ`:
-@inline forwarddiff_back(::Type{T}, ΔΩ, y_dual) where T = begin
-    #global g_tangent = ΔΩ
-    #global g_y_dual = y_dual
-    shape_forwarddiff_gradient(T, forwarddiff_back_unshaped(ΔΩ, y_dual))
-end
-
-# For `x::StaticArrays.SVector`, `forwarddiff_fwd_back(f, (x,), Val(1), ΔΩ) == ForwardDiff.jacobian(f, x)' * ΔΩ`:
-@inline function forwarddiff_fwd_back(f::Base.Callable, xs::Tuple, ::Val{i}, ΔΩ) where i
-    # @info "RUN forwarddiff_fwd_back(f, xs, Val($i), ΔΩ)"
+# For `x::StaticArrays.SVector`, `forwarddiff_vjp_impl(f, (x,), Val(1), ΔΩ) == ForwardDiff.jacobian(f, x)' * ΔΩ`:
+@inline function forwarddiff_vjp_impl(f::Base.Callable, xs::Tuple, ::Val{i}, ΔΩ) where i
+    #@info "RUN forwarddiff_vjp_impl(f, $xs, $i, $ΔΩ)"
     x_i = xs[i]
     y_dual = forwarddiff_fwd(f, xs, Val(i))
-    forwarddiff_back(typeof(x_i), ΔΩ, y_dual)
+    unflatten_tangent(x_i, svec_tangent_dual_product(ΔΩ, y_dual))
 end
 
 
+# Similar to Zygote.unbroadcast:
 
+unflatten_bc_tangent(x_orig::Number, dx_flat::AbstractArray{<:Real}) =
+    unflatten_tangent(x_orig, dx_flat)
+
+unflatten_bc_tangent(x_orig::Tuple{<:Any}, dx_flat::AbstractArray{<:Real}) =
+    make_tangent(typeof(x_orig), (unflatten_tangent(first(x_orig), dx_flat),))
+
+unflatten_bc_tangent(x_orig::Base.RefValue, dx_flat::AbstractArray{<:Real}) =
+    make_tangent(typeof(x_orig), (x = unflatten_tangent(first(x_orig), dx_flat),))
+
+unflatten_bc_tangent(x_orig::Number, dx_flat::AbstractArray{<:AbstractArray{<:Real}}) =
+    unflatten_tangent(x_orig, sum(dx_flat))
+
+unflatten_bc_tangent(x_orig::Tuple{<:Any}, dx_flat::AbstractArray{<:AbstractArray{<:Real}}) =
+    make_tangent(typeof(x_orig), (unflatten_tangent(first(x_orig), sum(dx_flat)),))
+
+unflatten_bc_tangent(x_orig::Base.RefValue, dx_flat::AbstractArray{<:AbstractArray{<:Real}}) =
+    make_tangent(typeof(x_orig), (x = unflatten_tangent(first(x_orig), sum(dx_flat)),))
+
+unflatten_bc_tangent(x_orig::Tuple, dx_flat::AbstractArray{<:AbstractArray{<:Real}}) =
+    make_tangent(typeof(x_orig), (unflatten_tangent.(x_orig, sum(dx_flat, dims=2:ndims(dx_flat)))...,))
+
+function unflatten_bc_tangent(x_orig::AbstractArray, dx_flat::AbstractArray{<:AbstractArray{<:Real}})
+    dims = ntuple(d -> size(x_orig, d) == 1 ? d : ndims(dx_flat)+1, ndims(dx_flat))
+    unflatten_tangent.(x_orig, sum(dx_flat; dims = dims))
+end
+    
+unflatten_bc_tangent(x_orig::Any, dx_flat::AbstractArray{<:ChainRulesCore.AbstractZero}) =
+    ConstructionBase.constructorof(eltype(dx_flat))()
+
+
+struct FwddiffFwd{F<:Base.Callable,i} <: Function
+    f::F
+end
+FwddiffFwd(f::F, ::Val{i}) where {F<:Base.Callable,i} = FwddiffFwd{F,i}(f)
+
+(fwd::FwddiffFwd{F,i})(xs...) where {F,i} = forwarddiff_fwd(fwd.f, xs, Val(i))
+
+
+function forwarddiff_bc_vjp_impl(f::Base.Callable, Xs::Tuple, ::Val{i}, ΔΩA::Any) where i
+    # @info "RUN forwarddiff_bc_vjp_impl(f, Xs, Val($i), ΔΩA)"
+    fwd = FwddiffFwd(f, Val(i))
+    dx_flat = svec_tangent_dual_product.(ΔΩA, fwd.(Xs...)) # ToDo: Use Base.Broadcast.broadcasted
+    unflatten_bc_tangent(Xs[i], dx_flat)
+end

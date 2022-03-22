@@ -1,7 +1,7 @@
 # This file is a part of ForwardDiffPullbacks.jl, licensed under the MIT License (MIT).
 
 
-# ToDo: Use ProjectTo in rrules (requires ChainRulesCore >= v0.10.11).
+# ToDo: Use ProjectTo in rrules
 
 
 struct FwdDiffPullbackThunk{F<:Base.Callable,T<:Tuple,i,U<:Any} <: ChainRulesCore.AbstractThunk
@@ -15,11 +15,8 @@ function FwdDiffPullbackThunk(f::F, xs::T, ::Val{i}, ΔΩ::U) where {F<:Base.Cal
 end
 
 @inline function ChainRulesCore.unthunk(tnk::FwdDiffPullbackThunk{F,T,i,U}) where {F,T,i,U}
-    forwarddiff_fwd_back(tnk.f, tnk.xs, Val(i), unthunk(tnk.ΔΩ))
+    forwarddiff_vjp_impl(tnk.f, tnk.xs, Val(i), unthunk(tnk.ΔΩ))
 end
-
-# ToDo: Remove (obsolete with ChainRulesCore >= v0.10.):
-(tnk::FwdDiffPullbackThunk)() = ChainRulesCore.unthunk(tnk)
 
 
 Base.@generated function _forwarddiff_pullback_thunks(f::Base.Callable, xs::NTuple{N,Any}, ΔΩ::Any) where N
@@ -53,11 +50,10 @@ function FwdDiffBCPullbackThunk(f::F, Xs::T, ::Val{i}, ΔΩA::U) where {F<:Base.
 end
 
 @inline function ChainRulesCore.unthunk(tnk::FwdDiffBCPullbackThunk{F,T,i,U}) where {F,T,i,U}
-    forwarddiff_bc_fwd_back(tnk.f, tnk.Xs, Val(i), unthunk(tnk.ΔΩA))
+    r = forwarddiff_bc_vjp_impl(tnk.f, tnk.Xs, Val(i), unthunk(tnk.ΔΩA))
+    # @info "ChainRulesCore.unthunk returns" tnk.Xs tnk.ΔΩA r
+    r
 end
-
-# ToDo: Remove (obsolete with ChainRulesCore >= v0.10.):
-(tnk::FwdDiffBCPullbackThunk)() = ChainRulesCore.unthunk(tnk)
 
 
 

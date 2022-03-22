@@ -6,4 +6,4 @@ This package provides the function [`fwddiff`](@ref). If wrapped around a functi
 
 So `Zygote.gradient(fwddiff(f), xs...)` should yield the same result as `Zygote.gradient(f, xs...)`, but will typically be substantially faster a function that has a comparatively small number of arguments, especially if the function runs a deep calculation. Broadcasting (i.e. `g.(fwddiff(f))`) is supported as well.
 
-Currently, ForwardDiffPullbacks supports functions with `Real`, `Tuple` and `StaticArrays.SVector` arguments. Support for `StaticArrays.SArray` and `Array`-valued arguments in general is on the to-do list.
+Currently, ForwardDiffPullbacks supports functions whose arguments and result(s) are statically sized, like `Real`, `Tuple`, `StaticArrays.StaticArray` and (nested) `NamedTuple`s and plain structs. Dynamic arrays are not supported yet.

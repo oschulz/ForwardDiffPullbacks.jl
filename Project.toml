@@ -10,7 +10,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-ChainRulesCore = "0.9.44, 0.10, 1"
+ChainRulesCore = "1"
 ForwardDiff = "0.10"
 Requires = "0.5, 1"
 StaticArrays = "0.12, 1.0"

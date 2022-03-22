@@ -46,5 +46,10 @@ Zygote.gradient((Xs...) -> sum(fwddiff(f).(Xs...)), Xs...) ==
 The gradient is the same with and without `fwddiff`, but `fwddiff` makes the
 gradient calculation a lot faster here.
 """
-fwddiff(f::Base.Callable) = WithForwardDiff(f)
+function fwddiff end
 export fwddiff
+
+fwddiff(f::Function) = WithForwardDiff(f)
+
+# For type stability if `f isa UnionAll`:
+fwddiff(::Type{T}) where T = WithForwardDiff{Type{T}}(T)

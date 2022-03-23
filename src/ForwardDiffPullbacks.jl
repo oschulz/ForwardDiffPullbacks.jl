@@ -12,7 +12,9 @@ module ForwardDiffPullbacks
 using LinearAlgebra
 
 import ChainRulesCore
+import ConstructionBase
 import ForwardDiff
+import Static
 import StaticArrays
 
 using ChainRulesCore: AbstractTangent, Tangent, NoTangent, ZeroTangent, AbstractThunk, unthunk

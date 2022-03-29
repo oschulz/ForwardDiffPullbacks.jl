@@ -47,14 +47,14 @@ include("testfuncs.jl")
     end
 
 
-    @test @tinferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tangent{Tuple{Int, Float32}, Tuple{Float32, Float32}}, SVector{3, Float32}}}
-    @test @tinferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
+    @test @inferred(cr_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tangent{Tuple{Int, Float32}, Tuple{Float32, Float32}}, SVector{3, Float32}}}
+    @test @inferred(zg_fwd_and_back(fwddiff(f), xs, ΔΩ)) isa Tuple{Tuple{Float32, Float32, Int}, Tuple{Float32, Tuple{Float32, Float32}, SVector{3, Float32}}}
 
     @test cr_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, Tangent{Tuple{Int, Float32}}(600.0f0, 1040.0f0), SVector(1600, 2280, 3080)))
     @test zg_fwd_and_back(fwddiff(f), xs, ΔΩ) == ((139, 783, 42), (280, (600, 1040), SVector(1600, 2280, 3080))) # == zg_fwd_and_back(f, xs, ΔΩ)
 
 
-    # @tinferred cr_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
+    # @inferred cr_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
     # zg_bc_fwd_and_back(fwddiff(f), Xs, ΔΩA)
     # zg_bc_fwd_and_back(f, Xs, ΔΩA)
 
@@ -104,14 +104,14 @@ include("testfuncs.jl")
         x = 0.5
     
         ΔΩ = (y = 1, ladj = nothing)
-        #=@tinferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
-        #=@tinferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
+        #=@inferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
+        #=@inferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, missing), ΔΩ)
         #compare with (ignore missings):
         zg_fwd_and_back(disttrafo, (trg_d, src_d, x, missing), ΔΩ)
     
         ΔΩ = (y = 1, ladj = 42)
-        #=@tinferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
-        #=@tinferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
+        #=@inferred=# cr_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
+        #=@inferred=# zg_fwd_and_back(fwddiff(disttrafo), (trg_d, src_d, x, 7), ΔΩ)
         #compare with (use deep approx):
         zg_fwd_and_back(disttrafo, (trg_d, src_d, x, 7), ΔΩ)
     
@@ -122,14 +122,14 @@ include("testfuncs.jl")
         X = randn(n)
     
         ΔΩs = fill((y = 1, ladj = nothing), n)
-        #=@tinferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
-        #=@tinferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
+        #=@inferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
+        #=@inferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, missing), ΔΩs))
         #compare with (ignore missings):
         zg_bc_fwd_and_back(disttrafo, (trg_D, src_D, X, missing), ΔΩs)
     
         ΔΩs = fill((y = 1, ladj = 42), n)
-        #=@tinferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
-        #=@tinferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
+        #=@inferred=#(cr_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
+        #=@inferred=#(zg_bc_fwd_and_back(fwddiff(disttrafo), (trg_D, src_D, X, 7), ΔΩs))
         #compare with (use deep approx):
         zg_bc_fwd_and_back(disttrafo, (trg_D, src_D, X, 7), ΔΩs)
     
@@ -147,8 +147,8 @@ include("testfuncs.jl")
             ismissing(ladj) ? 2 * y : typeof(y)(y^2 + ladj^2)
         end
     
-        #=@tinferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, 42)
-        #=@tinferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, missing)
+        #=@inferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, 42)
+        #=@inferred=# Zygote.gradient(dummy_loss, trg_d, src_d, x, missing)
     
         function bc_dummy_loss(trg_D::AbstractVector{<:Distribution}, src_D::AbstractVector{<:Distribution}, X::AbstractVector{<:Real}, prev_ladj::Union{Real,AbstractVector{<:Real},Missing})
             Y_ladj = fwddiff(disttrafo).(trg_D, src_D, X, prev_ladj)
@@ -158,13 +158,13 @@ include("testfuncs.jl")
             any(ismissing, ladj) ? T(sum(Y)) : T(sum(Y)^2 + sum(ladj)^2)
         end
     
-        #=@tinferred=# bc_dummy_loss(trg_D, src_D, X, 42)
-        #=@tinferred=# bc_dummy_loss(trg_D, src_D, X, missing)
+        #=@inferred=# bc_dummy_loss(trg_D, src_D, X, 42)
+        #=@inferred=# bc_dummy_loss(trg_D, src_D, X, missing)
     
-        #=@tinferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, 42)
-        #=@tinferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, missing)
+        #=@inferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, 42)
+        #=@inferred=# Zygote.gradient(bc_dummy_loss, trg_D, src_D, X, missing)
     
-        #=@tinferred=# Zygote.gradient(X -> bc_dummy_loss(trg_D, src_D, X, 42), X)
+        #=@inferred=# Zygote.gradient(X -> bc_dummy_loss(trg_D, src_D, X, 42), X)
     
         # Requires Zygote to utilize thunks (https://github.com/FluxML/Zygote.jl/pull/966):
         if isdefined(Zygote, Symbol("@_adjoint_keepthunks"))

@@ -11,9 +11,9 @@ include("testfuncs.jl")
 
 
 @testset "ChainRulesCore" begin
-    @test @tinferred(ChainRulesCore.rrule(fwddiff(f), xs...)) isa Tuple{Tuple, Function}
-    @test @tinferred((ChainRulesCore.rrule(fwddiff(f), xs...)[2])(ΔΩ)) isa Tuple{NoTangent, ForwardDiffPullbacks.FwdDiffPullbackThunk, ForwardDiffPullbacks.FwdDiffPullbackThunk,ForwardDiffPullbacks.FwdDiffPullbackThunk}
-    @test @tinferred(map(unthunk, (ChainRulesCore.rrule(fwddiff(f), xs...)[2])(ΔΩ))) == (NoTangent(), 280, Tangent{typeof(xs[2])}(600, 1040), SVector(1600, 2280, 3080))
+    @test @inferred(ChainRulesCore.rrule(fwddiff(f), xs...)) isa Tuple{Tuple, Function}
+    @test @inferred((ChainRulesCore.rrule(fwddiff(f), xs...)[2])(ΔΩ)) isa Tuple{NoTangent, ForwardDiffPullbacks.FwdDiffPullbackThunk, ForwardDiffPullbacks.FwdDiffPullbackThunk,ForwardDiffPullbacks.FwdDiffPullbackThunk}
+    @test @inferred(map(unthunk, (ChainRulesCore.rrule(fwddiff(f), xs...)[2])(ΔΩ))) == (NoTangent(), 280, Tangent{typeof(xs[2])}(600, 1040), SVector(1600, 2280, 3080))
 
     test_rrule(fwddiff(const_foo), scalar_x)
     custom_test_rrule(fwddiff(const_foo), tpl_x)

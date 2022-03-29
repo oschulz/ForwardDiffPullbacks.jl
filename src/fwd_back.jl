@@ -33,7 +33,7 @@ end
     tangent_dual_product((ΔΩ...,), (y_dual...,))
 end
 
-function tangent_dual_product(ΔΩ::NamedTuple{names}, y_dual::Any) where {names,N}
+function tangent_dual_product(ΔΩ::NamedTuple{names}, y_dual::Any) where {names}
     tangent_dual_product(values(ΔΩ), getprops_by_name(y_dual, Val(names)))
 end
 
@@ -45,8 +45,8 @@ end
 svec_tangent_dual_product(ΔΩ, y_dual) = make_svector((tangent_dual_product(ΔΩ, y_dual)...,))
 
 
-@inline function forwarddiff_fwd(f, xs::Tuple, ::Val{i}) where i
-    TagType = dual_tagtype((f,Val(i)), eltype(xs[i]))
+@inline function forwarddiff_fwd(f::F, xs::Tuple, ::Val{i}) where {F,i}
+    TagType = dual_tagtype(f, Val(i), eltype(xs[i]))
     xs_i_dual = forwarddiff_dualized(TagType, xs[i])
     xs_dual = ntuple(j -> i == j ? xs_i_dual : xs[j], Val(length(xs)))
     f(xs_dual...)
@@ -54,7 +54,7 @@ end
 
 
 # For `x::StaticArrays.SVector`, `forwarddiff_vjp_impl(f, (x,), Val(1), ΔΩ) == ForwardDiff.jacobian(f, x)' * ΔΩ`:
-@inline function forwarddiff_vjp_impl(f, xs::Tuple, ::Val{i}, ΔΩ) where i
+@inline function forwarddiff_vjp_impl(f::F, xs::Tuple, ::Val{i}, ΔΩ) where {F,i}
     #@info "RUN forwarddiff_vjp_impl(f, $xs, $i, $ΔΩ)"
     x_i = xs[i]
     y_dual = forwarddiff_fwd(f, xs, Val(i))
@@ -97,12 +97,13 @@ unflatten_bc_tangent(x_orig::Any, dx_flat::AbstractArray{<:ChainRulesCore.Abstra
 struct FwddiffFwd{F,i} <: Function
     f::F
 end
-FwddiffFwd(f::F, ::Val{i}) where {F,i} = FwddiffFwd{F,i}(f)
+FwddiffFwd(f::F, ::Val{i}) where {F,i} = FwddiffFwd{F,i}(f)  # force specialization
+FwddiffFwd(f::Type{F}, ::Val{i}) where {F,i} = FwddiffFwd{Type{F},i}(f)  # force specialization
 
 (fwd::FwddiffFwd{F,i})(xs...) where {F,i} = forwarddiff_fwd(fwd.f, xs, Val(i))
 
 
-function forwarddiff_bc_vjp_impl(f, Xs::Tuple, ::Val{i}, ΔΩA::Any) where i
+function forwarddiff_bc_vjp_impl(f::F, Xs::Tuple, ::Val{i}, ΔΩA::Any) where {F,i}
     # @info "RUN forwarddiff_bc_vjp_impl(f, Xs, Val($i), ΔΩA)"
     fwd = FwddiffFwd(f, Val(i))
     dx_flat = svec_tangent_dual_product.(ΔΩA, fwd.(Xs...)) # ToDo: Use Base.Broadcast.broadcasted

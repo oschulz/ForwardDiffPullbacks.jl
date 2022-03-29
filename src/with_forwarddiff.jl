@@ -4,8 +4,10 @@
 struct WithForwardDiff{F} <: Function
     f::F
 end
+WithForwardDiff(f::F) where F = WithForwardDiff{F}(f)  # force specialization
+WithForwardDiff(::Type{T}) where T = WithForwardDiff{Type{T}}(T) # For type stability if `f isa UnionAll`
 
-@inline (wrapped_f::WithForwardDiff)(xs...) = wrapped_f.f(xs...)
+@inline (wrapped_f::WithForwardDiff{F})(xs...) where F = wrapped_f.f(xs...)
 
 # Desireable for consistent behavior?
 # Base.broadcasted(wrapped_f::WithForwardDiff, xs...) = broadcast(wrapped_f.f, xs...)
@@ -49,7 +51,4 @@ gradient calculation a lot faster here.
 function fwddiff end
 export fwddiff
 
-fwddiff(f::Function) = WithForwardDiff(f)
-
-# For type stability if `f isa UnionAll`:
-fwddiff(::Type{T}) where T = WithForwardDiff{Type{T}}(T)
+@inline fwddiff(f) = WithForwardDiff(f)

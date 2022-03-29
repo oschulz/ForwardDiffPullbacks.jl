@@ -7,6 +7,14 @@
 using Documenter
 using ForwardDiffPullbacks
 
+# Doctest setup
+DocMeta.setdocmeta!(
+    ForwardDiffPullbacks,
+    :DocTestSetup,
+    :(using ForwardDiffPullbacks);
+    recursive=true,
+)
+
 makedocs(
     sitename = "ForwardDiffPullbacks",
     modules = [ForwardDiffPullbacks],

@@ -12,7 +12,7 @@ end
 
 
 """
-    fwddiff(f::Base.Callable)::Function
+    fwddiff(f)::Function
 
 Use `ForwardDiff` dual numbers to implement `ChainRulesCore` pullbacks For
 

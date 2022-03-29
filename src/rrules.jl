@@ -4,13 +4,13 @@
 # ToDo: Use ProjectTo in rrules
 
 
-struct FwdDiffPullbackThunk{F<:Base.Callable,T<:Tuple,i,U<:Any} <: ChainRulesCore.AbstractThunk
+struct FwdDiffPullbackThunk{F,T<:Tuple,i,U<:Any} <: ChainRulesCore.AbstractThunk
     f::F
     xs::T
     ΔΩ::U
 end
 
-function FwdDiffPullbackThunk(f::F, xs::T, ::Val{i}, ΔΩ::U) where {F<:Base.Callable,T<:Tuple,i,U<:Any}
+function FwdDiffPullbackThunk(f::F, xs::T, ::Val{i}, ΔΩ::U) where {F,T<:Tuple,i,U<:Any}
     FwdDiffPullbackThunk{F,T,i,U}(f, xs, ΔΩ)
 end
 
@@ -19,7 +19,7 @@ end
 end
 
 
-Base.@generated function _forwarddiff_pullback_thunks(f::Base.Callable, xs::NTuple{N,Any}, ΔΩ::Any) where N
+Base.@generated function _forwarddiff_pullback_thunks(f, xs::NTuple{N,Any}, ΔΩ::Any) where N
     Expr(:tuple, NoTangent(), (:(ForwardDiffPullbacks.FwdDiffPullbackThunk(f, xs, Val($i), ΔΩ)) for i in 1:N)...)
 end
 
@@ -39,13 +39,13 @@ end
 
 
 
-struct FwdDiffBCPullbackThunk{F<:Base.Callable,T<:Tuple,i,U} <: ChainRulesCore.AbstractThunk
+struct FwdDiffBCPullbackThunk{F,T<:Tuple,i,U} <: ChainRulesCore.AbstractThunk
     f::F
     Xs::T
     ΔΩA::U
 end
 
-function FwdDiffBCPullbackThunk(f::F, Xs::T, ::Val{i}, ΔΩA::U) where {F<:Base.Callable,T<:Tuple,i,U}
+function FwdDiffBCPullbackThunk(f::F, Xs::T, ::Val{i}, ΔΩA::U) where {F,T<:Tuple,i,U}
     FwdDiffBCPullbackThunk{F,T,i,U}(f, Xs, ΔΩA)
 end
 
@@ -57,7 +57,7 @@ end
 
 
 
-Base.@generated function _forwarddiff_bc_pullback_thunks(f::Base.Callable, Xs::NTuple{N,Any}, ΔΩA::Any) where N
+Base.@generated function _forwarddiff_bc_pullback_thunks(f, Xs::NTuple{N,Any}, ΔΩA::Any) where N
     Expr(:tuple, NoTangent(), NoTangent(), (:(ForwardDiffPullbacks.FwdDiffBCPullbackThunk(f, Xs, Val($i), ΔΩA)) for i in 1:N)...)
 end
 

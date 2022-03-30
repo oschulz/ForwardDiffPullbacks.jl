@@ -94,17 +94,21 @@ unflatten_bc_tangent(x_orig::Any, dx_flat::AbstractArray{<:ChainRulesCore.Abstra
     ConstructionBase.constructorof(eltype(dx_flat))()
 
 
-struct FwddiffFwd{F<:Function,i} <: Function
+struct FwddiffVJPSingleArg{F<:Function,i} <: Function
     f::F
 end
-FwddiffFwd(f::F, ::Val{i}) where {F<:Function,i} = FwddiffFwd{F,i}(f)
+FwddiffVJPSingleArg(f::F, ::Val{i}) where {F<:Function,i} = FwddiffVJPSingleArg{F,i}(f)
 
-(fwd::FwddiffFwd{F,i})(xs...) where {F<:Function,i} = forwarddiff_fwd(fwd.f, xs, Val(i))
+# Need to use Vararg{Any,N} to force specialization:
+function (fwdback::FwddiffVJPSingleArg{F,i})(ΔΩ, xs::Vararg{Any,N}) where {F,i,N}
+    y_dual = forwarddiff_fwd(fwdback.f, xs, Val(i))
+    svec_tangent_dual_product(ΔΩ, y_dual)
+end
 
 
 function forwarddiff_bc_vjp_impl(f::F, Xs::Tuple, ::Val{i}, ΔΩA::Any) where {F<:Function,i}
     # @info "RUN forwarddiff_bc_vjp_impl(f, Xs, Val($i), ΔΩA)"
-    fwd = FwddiffFwd(f, Val(i))
-    dx_flat = svec_tangent_dual_product.(ΔΩA, fwd.(Xs...)) # ToDo: Use Base.Broadcast.broadcasted
-    unflatten_bc_tangent(Xs[i], dx_flat)
+    vjp_i = FwddiffVJPSingleArg(f, Val(i))
+    dXi_flat = broadcast(vjp_i, ΔΩA, Xs...) # ToDo: Use Base.Broadcast.broadcasted
+    unflatten_bc_tangent(Xs[i], dXi_flat)
 end

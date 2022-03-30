@@ -11,5 +11,4 @@ function dual_tagtype end
 @inline dual_partials(x::ForwardDiff.Dual) = ForwardDiff.partials(x)
 @inline dual_partials(x::Real) = ZeroTangent()
 
-@inline dual_tagtype(f::F, ::Val{i}, ::Type{T}) where {F,i,T} = ForwardDiff.Tag{Tuple{F,Val{i}}, Float64}
-@inline dual_tagtype(f::Type{F}, ::Val{i}, ::Type{T}) where {F,i,T} = ForwardDiff.Tag{Tuple{F,Val{i}}, Float64}
+@inline dual_tagtype(f::F, ::Val{i}, ::Type{T}) where {F<:Function,i,T} = ForwardDiff.Tag{Tuple{F,Val{i}}, Float64}

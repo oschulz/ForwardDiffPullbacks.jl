@@ -45,7 +45,7 @@ end
 svec_tangent_dual_product(ΔΩ, y_dual) = make_svector((tangent_dual_product(ΔΩ, y_dual)...,))
 
 
-@inline function forwarddiff_fwd(f::F, xs::Tuple, ::Val{i}) where {F,i}
+@inline function forwarddiff_fwd(f::F, xs::Tuple, ::Val{i}) where {F<:Function,i}
     TagType = dual_tagtype(f, Val(i), eltype(xs[i]))
     xs_i_dual = forwarddiff_dualized(TagType, xs[i])
     xs_dual = ntuple(j -> i == j ? xs_i_dual : xs[j], Val(length(xs)))
@@ -54,7 +54,7 @@ end
 
 
 # For `x::StaticArrays.SVector`, `forwarddiff_vjp_impl(f, (x,), Val(1), ΔΩ) == ForwardDiff.jacobian(f, x)' * ΔΩ`:
-@inline function forwarddiff_vjp_impl(f::F, xs::Tuple, ::Val{i}, ΔΩ) where {F,i}
+@inline function forwarddiff_vjp_impl(f::F, xs::Tuple, ::Val{i}, ΔΩ) where {F<:Function,i}
     #@info "RUN forwarddiff_vjp_impl(f, $xs, $i, $ΔΩ)"
     x_i = xs[i]
     y_dual = forwarddiff_fwd(f, xs, Val(i))
@@ -94,16 +94,15 @@ unflatten_bc_tangent(x_orig::Any, dx_flat::AbstractArray{<:ChainRulesCore.Abstra
     ConstructionBase.constructorof(eltype(dx_flat))()
 
 
-struct FwddiffFwd{F,i} <: Function
+struct FwddiffFwd{F<:Function,i} <: Function
     f::F
 end
-FwddiffFwd(f::F, ::Val{i}) where {F,i} = FwddiffFwd{F,i}(f)  # force specialization
-FwddiffFwd(f::Type{F}, ::Val{i}) where {F,i} = FwddiffFwd{Type{F},i}(f)  # force specialization
+FwddiffFwd(f::F, ::Val{i}) where {F<:Function,i} = FwddiffFwd{F,i}(f)
 
-(fwd::FwddiffFwd{F,i})(xs...) where {F,i} = forwarddiff_fwd(fwd.f, xs, Val(i))
+(fwd::FwddiffFwd{F,i})(xs...) where {F<:Function,i} = forwarddiff_fwd(fwd.f, xs, Val(i))
 
 
-function forwarddiff_bc_vjp_impl(f::F, Xs::Tuple, ::Val{i}, ΔΩA::Any) where {F,i}
+function forwarddiff_bc_vjp_impl(f::F, Xs::Tuple, ::Val{i}, ΔΩA::Any) where {F<:Function,i}
     # @info "RUN forwarddiff_bc_vjp_impl(f, Xs, Val($i), ΔΩA)"
     fwd = FwddiffFwd(f, Val(i))
     dx_flat = svec_tangent_dual_product.(ΔΩA, fwd.(Xs...)) # ToDo: Use Base.Broadcast.broadcasted

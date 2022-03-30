@@ -1,11 +1,23 @@
 # This file is a part of ForwardDiffPullbacks.jl, licensed under the MIT License (MIT).
 
 
-struct WithForwardDiff{F} <: Function
+struct AsFunction{F} <: Function
     f::F
 end
-WithForwardDiff(f::F) where F = WithForwardDiff{F}(f)  # force specialization
-WithForwardDiff(::Type{T}) where T = WithForwardDiff{Type{T}}(T) # For type stability if `f isa UnionAll`
+#AsFunction(f::F) where F = AsFunction{F}(f)  # force specialization
+AsFunction(::Type{T}) where T = AsFunction{Type{T}}(T) # For type stability if `f isa UnionAll`
+
+@inline (wrapped_f::AsFunction{F})(xs...) where F = wrapped_f.f(xs...)
+
+
+@inline asfunction(f) = AsFunction(f)
+@inline asfunction(f::Function) = f
+
+
+
+struct WithForwardDiff{F<:Function} <: Function
+    f::F
+end
 
 @inline (wrapped_f::WithForwardDiff{F})(xs...) where F = wrapped_f.f(xs...)
 
@@ -51,4 +63,5 @@ gradient calculation a lot faster here.
 function fwddiff end
 export fwddiff
 
-@inline fwddiff(f) = WithForwardDiff(f)
+# Wrap functions in AsFunction if necessary for type stability, e.g. if f is a type/ctor:
+@inline fwddiff(f) = WithForwardDiff(asfunction(f))

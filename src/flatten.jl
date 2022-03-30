@@ -8,7 +8,7 @@ _fieldvals(x::Tuple) = x
 end
 
 
-getndof(x::Real) where {T} = static(1)
+getndof(x::Real) = static(1)
 getndof(x::Tuple{}) = static(0)
 getndof(x::NTuple{N,Real}) where N = static(N)
 getndof(x::T) where {T} = sum(map(getndof, _fieldvals(x)))

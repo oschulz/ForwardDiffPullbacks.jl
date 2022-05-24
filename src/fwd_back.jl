@@ -16,6 +16,7 @@ forwarddiff_dualized(::Type{TagType}, x) where TagType = unflatten(x, forwarddif
 
 @inline tangent_dual_product(ΔΩ::RealTangentLike, y_dual::Real) = ΔΩ * dual_partials(y_dual)
 @inline tangent_dual_product(ΔΩ_i::ZeroLike, y_dual::Any) = ZeroTangent()
+@inline tangent_dual_product(ΔΩ_i::ZeroLike, y_dual::Real) = ZeroTangent()
 
 tangent_dual_product(ΔΩ::Tuple{}, y_dual::Tuple{}) = NoTangent()
 

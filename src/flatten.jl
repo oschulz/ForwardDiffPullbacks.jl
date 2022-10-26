@@ -13,7 +13,7 @@ getndof(x::Tuple{}) = static(0)
 getndof(x::NTuple{N,Real}) where N = static(N)
 getndof(x::T) where {T} = sum(map(getndof, _fieldvals(x)))
 getndof(x::StaticArrays.StaticArray{sz, <:Real}) where sz = static(prod(size(x)))
-getndof(x::AbstractArray{<:Real}) where T = prod(size(x))
+getndof(x::AbstractArray{<:Real}) = prod(size(x))
 # getndof(x::AbstractArray) # ToDo
 
 
